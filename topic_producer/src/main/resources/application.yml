@@ -18,4 +18,4 @@ spring:
     #定义队列名称
     queueName: myQueue
     #定义主题名称
-    topicName: myTopic2Y
+    topicName: myTopic

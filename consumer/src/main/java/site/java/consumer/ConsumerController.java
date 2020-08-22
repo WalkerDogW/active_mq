@@ -54,7 +54,7 @@ public class ConsumerController {
          */
 
 
-        //2、通过监听的方式来消费消息（异步）
+        //2、通过监听的方式来消费消息（异步非阻塞  监听器 onMessage()）
         messageConsumer.setMessageListener(new MessageListener() {
             @Override
             public void onMessage(Message message) {

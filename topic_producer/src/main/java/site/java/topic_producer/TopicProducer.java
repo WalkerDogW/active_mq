@@ -8,6 +8,7 @@ import org.springframework.jms.core.JmsMessagingTemplate;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.jms.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
@@ -19,6 +20,7 @@ import java.io.IOException;
 public class TopicProducer {
     @Autowired
     private JmsMessagingTemplate jmsMessagingTemplate;
+
     @Value("${spring.activemq.topicName}")
     private String topicName;
 
@@ -35,4 +37,30 @@ public class TopicProducer {
 
         response.getWriter().write("success");
     }
+
+
+    @RequestMapping("sendToTopic2")
+    public void sendMessage2() throws JMSException {
+        String topicName = "myTopic_new";
+
+        ConnectionFactory connectionFactory = jmsMessagingTemplate.getConnectionFactory();
+        Connection connection = connectionFactory.createConnection();
+        connection.start();
+
+        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+
+        Topic topic = session.createTopic(topicName);
+        MessageProducer messageProducer = session.createProducer(topic);
+
+        for (int i = 0; i < 3; i++) {
+            TextMessage textMessage = session.createTextMessage("Topic: " + i);
+            messageProducer.send(textMessage);
+        }
+
+        messageProducer.close();
+        session.close();
+        connection.close();
+        System.out.println("信息发布到Topic:"+topicName);
+    }
+
 }
