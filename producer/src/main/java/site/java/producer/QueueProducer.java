@@ -51,6 +51,9 @@ public class QueueProducer {
         //创建生产者
         MessageProducer messageProducer = session.createProducer(myQueue2);
 
+        //消息持久化，队列默认持久，订阅默认非持久
+        messageProducer.setDeliveryMode(DeliveryMode.PERSISTENT);
+
         //生产消息
         for (int i=0 ; i<3;i++){
             TextMessage textMessage = session.createTextMessage("msg----" + i);
@@ -60,6 +63,56 @@ public class QueueProducer {
         //关闭资源
         messageProducer.close();
         connection.close();
+        System.out.println("信息发布到MQ完成");
+    }
+
+
+
+    //事务
+    @RequestMapping("sendToQueue3")
+    public void sendMessage3() throws JMSException {
+        //通过链接工厂获取connection并启动
+        ConnectionFactory connectionFactory = jmsMessagingTemplate.getConnectionFactory();
+        Connection connection = connectionFactory.createConnection();
+        connection.start();
+
+        //事务模式
+        //创建会话，参数为事务，签收
+        Session session = connection.createSession(true, Session.AUTO_ACKNOWLEDGE);//选择事务后第二个参数只是语法上需要
+
+        //创建目的地
+        Queue myQueue2 = session.createQueue("myQueue2");
+
+        //创建生产者
+        MessageProducer messageProducer = session.createProducer(myQueue2);
+
+        //消息持久化，队列默认持久，订阅默认非持久
+        messageProducer.setDeliveryMode(DeliveryMode.PERSISTENT);
+
+        //生产消息
+        for (int i=0 ; i<3;i++){
+            TextMessage textMessage = session.createTextMessage("TxMsg----" + i);
+            messageProducer.send(textMessage);
+        }
+
+        //提交事务
+        session.commit();
+
+        try {
+            session.commit();
+        }catch (Exception e){
+            e.printStackTrace();
+            session.rollback();
+        }finally {
+            if(session != null){
+                session.close();
+            }
+        }
+
+        //关闭资源
+        messageProducer.close();
+        connection.close();
+
         System.out.println("信息发布到MQ完成");
     }
 }

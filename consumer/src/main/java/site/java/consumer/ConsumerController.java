@@ -17,8 +17,8 @@ public class ConsumerController {
     @Autowired
     private JmsMessagingTemplate jmsMessagingTemplate;
 
-    @RequestMapping("receiveFromQueue2")
-    public void sendMessage2() throws JMSException, IOException {
+    @RequestMapping("receiveFromQueue")
+    public void sendMessage() throws JMSException, IOException {
         //通过链接工厂获取connection并启动
         ConnectionFactory connectionFactory = jmsMessagingTemplate.getConnectionFactory();
         Connection connection = connectionFactory.createConnection();
@@ -81,4 +81,52 @@ public class ConsumerController {
         connection.close();
     }
 
+
+
+    //手动签收
+    @RequestMapping("receiveFromQueue2")
+    public void sendMessage2() throws JMSException, IOException {
+        //通过链接工厂获取connection并启动
+        ConnectionFactory connectionFactory = jmsMessagingTemplate.getConnectionFactory();
+        Connection connection = connectionFactory.createConnection();
+        connection.start();
+
+        //创建会话，手动签收
+        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+
+        //创建目的地
+        Queue myQueue2 = session.createQueue("myQueue2");
+
+        //创建消费者
+        MessageConsumer messageConsumer = session.createConsumer(myQueue2);
+
+
+        //通过监听的方式来消费消息（异步非阻塞  监听器 onMessage()）
+        messageConsumer.setMessageListener(new MessageListener() {
+            @Override
+            public void onMessage(Message message) {
+                if(message !=null && (message instanceof  TextMessage)){
+                    TextMessage textMessage = (TextMessage)message;
+                    try {
+                        System.out.println("消费者："+textMessage.getText());
+                        //手动签收，客户端需要调用acknowledge
+                        textMessage.acknowledge();
+                    } catch (JMSException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        //保证控制台不关闭
+        System.in.read();
+
+
+
+
+
+        //关闭资源
+        messageConsumer.close();
+        session.close();
+        connection.close();
+    }
 }
